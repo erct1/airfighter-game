@@ -1,6 +1,7 @@
 /*
- * Ã´ø’…‰ª˜”Œœ∑ - V1.5 (–ﬁ∏¥≤Àµ•∞¥º¸¥©Õ∏)
- * ±‡“Î£∫VS2022 + EasyX x64
+ * Â§™Á©∫Â∞ÑÂáªÊ∏∏Êàè - V1.6 (ÁªàÊûÅÊ≠¶Âô®Á≥ªÁªü)
+ * ÁºñËØëÔºöVS2022 + EasyX x64
+ * Êñ∞Â¢ûÔºöLv.4 Âº∫ÂåñÊ≠¶Âô®ÔºåLv.5 ÁöÆËÇ§‰∏ìÂ±ûÁªàÊûÅÊ≠¶Âô®
  */
 
 #include <graphics.h>
@@ -22,30 +23,30 @@ const int MAX_LASERS = 10;
 
 bool g_keys[256] = { false };
 
-#define GAME_VERSION _T("V1.5")
+#define GAME_VERSION _T("V1.6")
 
-// ---------- ∆§∑Ù ----------
+// ---------- ÁöÆËÇ§ ----------
 enum SkinType { SKIN_DEFAULT = 0, SKIN_FLAME = 1, SKIN_ICE = 2, SKIN_THUNDER = 3, SKIN_GOLD = 4, SKIN_STEALTH = 5, SKIN_COUNT = 6 };
 struct SkinConfig { COLORREF bodyColor, cockpitColor, wingColor, flameColor; TCHAR name[20]; };
 SkinConfig g_skins[SKIN_COUNT] = {
-    {RGB(0,150,255),RGB(0,255,255),RGB(0,100,200),RGB(255,150,0),_T("ƒ¨»œ")},
-    {RGB(255,80,0),RGB(255,200,50),RGB(200,50,0),RGB(255,255,0),_T("ª—Ê")},
-    {RGB(100,200,255),RGB(200,240,255),RGB(50,150,220),RGB(150,220,255),_T("±˘À™")},
-    {RGB(200,200,50),RGB(255,255,150),RGB(150,150,30),RGB(255,255,200),_T("¿◊µÁ")},
-    {RGB(255,200,50),RGB(255,240,150),RGB(200,150,30),RGB(255,215,0),_T("ª∆Ω")},
-    {RGB(60,60,80),RGB(100,100,150),RGB(30,30,50),RGB(80,80,120),_T("“˛–Œ")}
+    {RGB(0,150,255),RGB(0,255,255),RGB(0,100,200),RGB(255,150,0),_T("ÈªòËÆ§")},
+    {RGB(255,80,0),RGB(255,200,50),RGB(200,50,0),RGB(255,255,0),_T("ÁÅ´ÁÑ∞")},
+    {RGB(100,200,255),RGB(200,240,255),RGB(50,150,220),RGB(150,220,255),_T("ÂÜ∞Èúú")},
+    {RGB(200,200,50),RGB(255,255,150),RGB(150,150,30),RGB(255,255,200),_T("Èõ∑Áîµ")},
+    {RGB(255,200,50),RGB(255,240,150),RGB(200,150,30),RGB(255,215,0),_T("ÈªÑÈáë")},
+    {RGB(60,60,80),RGB(100,100,150),RGB(30,30,50),RGB(80,80,120),_T("ÈöêÂΩ¢")}
 };
 
-// ---------- ƒ—∂» ----------
+// ---------- ÈöæÂ∫¶ ----------
 enum DifficultyLevel { DIFF_EASY = 0, DIFF_NORMAL = 1, DIFF_HARD = 2, DIFF_COUNT = 3 };
-const TCHAR* g_diffNames[DIFF_COUNT] = { _T("ºÚµ•"), _T("∆’Õ®"), _T("¿ßƒ—") };
+const TCHAR* g_diffNames[DIFF_COUNT] = { _T("ÁÆÄÂçï"), _T("ÊôÆÈÄö"), _T("Âõ∞Èöæ") };
 const double g_diffSpawnRate[DIFF_COUNT] = { 30.0, 20.0, 12.0 };
 const int g_diffStartEnemies[DIFF_COUNT] = { 5, 8, 12 };
 const double g_diffEnemySpeed[DIFF_COUNT] = { 0.7, 1.0, 1.4 };
 
-// ---------- µÿÕº ----------
+// ---------- Âú∞Âõæ ----------
 enum MapType { MAP_STAR = 0, MAP_DESERT = 1, MAP_CYBER = 2, MAP_COUNT = 3 };
-const TCHAR* g_mapNames[MAP_COUNT] = { _T("–«ø’"), _T("…≥ƒÆ"), _T("»¸≤©") };
+const TCHAR* g_mapNames[MAP_COUNT] = { _T("ÊòüÁ©∫"), _T("Ê≤ôÊº†"), _T("ËµõÂçö") };
 
 enum GameMode { MODE_SINGLE, MODE_COOP, MODE_SURVIVAL };
 enum GameState {
@@ -168,15 +169,28 @@ class Player {
 public:
     double x, y;
     int lives, score, combo, invincibleTimer, shootCooldown, currentShootTimer, weaponLevel, playerID, skinType;
+    int maxWeaponLevel;   // ‚òÖ Êñ∞Â¢ûÔºöÊúÄÂ§ßÊ≠¶Âô®Á≠âÁ∫ß
     double comboTime;
     bool active;
     SkinConfig skin;
     Player(int id) :x(id == 1 ? SCREEN_WIDTH / 3 : SCREEN_WIDTH * 2 / 3), y(SCREEN_HEIGHT - 80),
         lives(3), score(0), combo(0), comboTime(0), active(true), invincibleTimer(0),
-        shootCooldown(15), currentShootTimer(0), weaponLevel(1), playerID(id), skinType(SKIN_DEFAULT) {
+        shootCooldown(15), currentShootTimer(0), weaponLevel(1), playerID(id), skinType(SKIN_DEFAULT),
+        maxWeaponLevel(3) {   // ‚òÖ ÈªòËÆ§ÊúÄÂ§ß3Á∫ß
         skin = g_skins[SKIN_DEFAULT];
     }
-    void setSkin(int t) { skinType = t; skin = g_skins[t]; }
+    void setSkin(int t) {
+        skinType = t;
+        skin = g_skins[t];
+        // ‚òÖ Ê†πÊçÆÁöÆËÇ§ËÆæÂÆöÊúÄÂ§ßÊ≠¶Âô®Á≠âÁ∫ß
+        if (t == SKIN_DEFAULT) {
+            maxWeaponLevel = 3;   // ÈªòËÆ§ÁöÆËÇ§ÊúÄÈ´ò3Á∫ß
+        }
+        else {
+            maxWeaponLevel = 5;   // ÂÖ∂‰ªñÁöÆËÇ§ÂèØÂçáÂà∞5Á∫ßÁªàÊûÅ
+        }
+        if (weaponLevel > maxWeaponLevel) weaponLevel = maxWeaponLevel;
+    }
     COLORREF getBulletColor() const { return skin.bodyColor; }
     void moveLeft() { if (x > 50) x -= 5; }
     void moveRight() { if (x < SCREEN_WIDTH - 50) x += 5; }
@@ -251,7 +265,7 @@ class SpaceGame {
     vector<Particle> particles;
     vector<PowerUp> powerUps;
     vector<Laser> lasers;
-    GameState state, prevState;          // prevState ”√”⁄ºÏ≤‚◊¥Ã¨±‰ªØ
+    GameState state, prevState;
     GameMode mode;
     int enemySpawnTimer, bossSpawnTimer, difficulty, maxEnemiesOnScreen, totalScore;
     IMAGE* bg;
@@ -336,28 +350,170 @@ public:
         enemies.push_back(e);
     }
 
+    // ‚òÖ ÁªàÊûÅÊ≠¶Âô®ÂèëÂ∞ÑÂáΩÊï∞
+    void fireUltimateWeapon(Player& p) {
+        COLORREF color = p.getBulletColor();
+        double cx = p.x, cy = p.y - 20;
+
+        switch (p.skinType) {
+        case SKIN_DEFAULT: {
+            // ËÉΩÈáèÂºπÂπïÔºö9ÂèëÊâáÂΩ¢
+            for (int i = -4; i <= 4; i++) {
+                double angle = i * 0.15;
+                Bullet b(cx, cy, p.playerID, 8.0 + abs(i) * 0.5, angle, color);
+                b.radius = 3 + (i == 0 ? 2 : 0);
+                bullets.push_back(b);
+            }
+            break;
+        }
+        case SKIN_FLAME: {
+            // ÁÉàÁÑ∞È£éÊö¥Ôºö‰∏ªÂºπÂ∑®ÂûãÁÅ´ÁÑ∞Âºπ + ÂâØÂºπ
+            Bullet main(cx, cy, p.playerID, 6.0, 0.0, RGB(255, 150, 0));
+            main.radius = 12;
+            main.damage = 3;
+            bullets.push_back(main);
+            for (int i = 0; i < 4; i++) {
+                double angle = i * 1.57 + 0.3;
+                Bullet b(cx + sin(angle) * 15, cy + cos(angle) * 10,
+                    p.playerID, 5.0, sin(angle) * 0.8, RGB(255, 100, 0));
+                b.radius = 5;
+                bullets.push_back(b);
+            }
+            for (int i = 0; i < 6; i++) {
+                spawnExplosion(cx + rand() % 40 - 20, cy + rand() % 20 - 10,
+                    RGB(255, rand() % 100 + 100, 0), 3);
+            }
+            break;
+        }
+        case SKIN_ICE: {
+            // ÂÜ∞Êô∂Êï£Â∞ÑÔºöVÂΩ¢ÂÜ∞Èî• + È£òËêΩÂÜ∞Êô∂
+            for (int i = -2; i <= 2; i++) {
+                Bullet b(cx + i * 12, cy, p.playerID, 7.0 + abs(i) * 0.3, i * 0.2, RGB(150, 230, 255));
+                b.radius = 5 + (i == 0 ? 3 : 0);
+                bullets.push_back(b);
+            }
+            for (int i = 0; i < 4; i++) {
+                Bullet b(cx + rand() % 60 - 30, cy + rand() % 20,
+                    p.playerID, 2.0 + rand() % 2, 0.0, RGB(200, 240, 255));
+                b.radius = 2;
+                bullets.push_back(b);
+            }
+            break;
+        }
+        case SKIN_THUNDER: {
+            // Èõ∑ÈúÜ‰∏áÈíßÔºö‰∏ªÈõ∑Êùü + ÂàÜÊîØÈó™Áîµ
+            Bullet main(cx, cy, p.playerID, 14.0, 0.0, RGB(255, 255, 200));
+            main.radius = 8;
+            main.damage = 2;
+            bullets.push_back(main);
+            for (int i = -1; i <= 1; i++) {
+                Bullet b(cx + i * 20, cy + 5, p.playerID, 6.0 + abs(i) * 2, i * 0.25, RGB(200, 200, 255));
+                b.radius = 4;
+                bullets.push_back(b);
+            }
+            for (int i = 0; i < 8; i++) {
+                spawnExplosion(cx + rand() % 50 - 25, cy + rand() % 30 - 10,
+                    RGB(200 + rand() % 55, 200 + rand() % 55, 255), 2);
+            }
+            break;
+        }
+        case SKIN_GOLD: {
+            // ÈªÑÈáëÁàÜË£ÇÔºöÈáëËâ≤Â∑®Âºπ + ËøΩË∏™Â∞èÂºπ
+            Bullet main(cx, cy, p.playerID, 5.0, 0.0, RGB(255, 215, 0));
+            main.radius = 14;
+            main.damage = 4;
+            bullets.push_back(main);
+            for (int i = 0; i < 6; i++) {
+                double angle = i * 1.047 + 0.2;
+                Bullet b(cx + sin(angle) * 20, cy + cos(angle) * 15,
+                    p.playerID, 3.0 + rand() % 2, sin(angle) * 0.5, RGB(255, 200, 50));
+                b.radius = 4;
+                bullets.push_back(b);
+            }
+            break;
+        }
+        case SKIN_STEALTH: {
+            // ÊöóÂΩ±Á™ÅË¢≠ÔºöÁ©øÈÄèÂºπ + È´òÈÄüÊöóÂΩ±Âºπ
+            Bullet shadow(cx, cy, p.playerID, 10.0, 0.0, RGB(150, 150, 200));
+            shadow.radius = 7;
+            shadow.damage = 2;
+            bullets.push_back(shadow);
+            for (int i = -2; i <= 2; i += 2) {
+                Bullet b(cx + i * 10, cy, p.playerID, 12.0 + abs(i), i * 0.1, RGB(100, 100, 150));
+                b.radius = 2;
+                bullets.push_back(b);
+            }
+            break;
+        }
+        }
+    }
+
+    // ‚òÖ ÈáçÂÜô playerShoot ‰ª•ÊîØÊåÅ Lv.4 Âíå Lv.5
     void playerShoot(Player& p) {
         if (!p.canShoot() || bullets.size() >= MAX_BULLETS) return;
+
         COLORREF bulletColor = p.getBulletColor();
+
+        // ÁîüÂ≠òÊ®°ÂºèÁâπÊÆäÂ§ÑÁêÜÔºà‰πüÊîØÊåÅÂçáÁ∫ßÔºâ
         if (mode == MODE_SURVIVAL) {
-            int count = 8; double speed = 5.0;
+            int count = 8;
+            double speed = 5.0;
             if (p.weaponLevel == 2) { count = 12; speed = 5.5; }
-            else if (p.weaponLevel >= 3) { count = 16; speed = 6.0; }
+            else if (p.weaponLevel == 3) { count = 16; speed = 6.0; }
+            else if (p.weaponLevel == 4) { count = 20; speed = 7.0; }
+            else if (p.weaponLevel >= 5) { count = 24; speed = 8.0; }
             for (int i = 0; i < count; i++) {
                 double angle = i * 2 * 3.1415926535 / count;
                 Bullet b(p.x, p.y, p.playerID, speed, 0.0, bulletColor);
-                b.vx = cos(angle) * speed; b.vy = sin(angle) * speed;
+                b.vx = cos(angle) * speed;
+                b.vy = sin(angle) * speed;
+                if (p.weaponLevel >= 5) b.radius = 6;
+                else if (p.weaponLevel >= 4) b.radius = 5;
                 bullets.push_back(b);
             }
+            return;
         }
-        else {
+
+        // ---- ÊôÆÈÄöÊ®°Âºè ----
+        // Lv.1 ~ Lv.3 ÈÄöÁî®
+        if (p.weaponLevel <= 3) {
             switch (p.weaponLevel) {
-            case 1: bullets.push_back(Bullet(p.x, p.y - 20, p.playerID, 8.0, 0.0, bulletColor)); break;
-            case 2: bullets.push_back(Bullet(p.x - 8, p.y - 15, p.playerID, 8.0, 0.0, bulletColor)); bullets.push_back(Bullet(p.x + 8, p.y - 15, p.playerID, 8.0, 0.0, bulletColor)); break;
-            case 3: bullets.push_back(Bullet(p.x, p.y - 20, p.playerID, 10.0, 0.0, bulletColor)); bullets.push_back(Bullet(p.x - 10, p.y - 15, p.playerID, 7.0, -1.0, bulletColor)); bullets.push_back(Bullet(p.x + 10, p.y - 15, p.playerID, 7.0, 1.0, bulletColor)); break;
+            case 1:
+                bullets.push_back(Bullet(p.x, p.y - 20, p.playerID, 8.0, 0.0, bulletColor));
+                break;
+            case 2:
+                bullets.push_back(Bullet(p.x - 8, p.y - 15, p.playerID, 8.0, 0.0, bulletColor));
+                bullets.push_back(Bullet(p.x + 8, p.y - 15, p.playerID, 8.0, 0.0, bulletColor));
+                break;
+            case 3:
+                bullets.push_back(Bullet(p.x, p.y - 20, p.playerID, 10.0, 0.0, bulletColor));
+                bullets.push_back(Bullet(p.x - 10, p.y - 15, p.playerID, 7.0, -1.0, bulletColor));
+                bullets.push_back(Bullet(p.x + 10, p.y - 15, p.playerID, 7.0, 1.0, bulletColor));
+                break;
             }
+            return;
+        }
+
+        // Lv.4 Âº∫ÂåñÊ≠¶Âô®ÔºàÊâÄÊúâÈùûÈªòËÆ§ÁöÆËÇ§ÈÄöÁî®Ôºâ
+        if (p.weaponLevel == 4) {
+            bullets.push_back(Bullet(p.x, p.y - 22, p.playerID, 12.0, 0.0, bulletColor));
+            bullets.push_back(Bullet(p.x - 12, p.y - 18, p.playerID, 9.0, -0.6, bulletColor));
+            bullets.push_back(Bullet(p.x + 12, p.y - 18, p.playerID, 9.0, 0.6, bulletColor));
+            bullets.push_back(Bullet(p.x - 6, p.y - 20, p.playerID, 10.0, -0.3, bulletColor));
+            bullets.push_back(Bullet(p.x + 6, p.y - 20, p.playerID, 10.0, 0.3, bulletColor));
+            // Âº∫ÂåñÂ≠êÂºπÁ®çÂ§ß
+            for (auto& b : bullets) {
+                if (b.active && b.playerID == p.playerID) b.radius = 4;
+            }
+            return;
+        }
+
+        // Lv.5 ÁªàÊûÅÊ≠¶Âô®
+        if (p.weaponLevel >= 5) {
+            fireUltimateWeapon(p);
         }
     }
+
     void enemyShoot(Enemy& e, Player& t) {
         if (bullets.size() >= MAX_BULLETS) return;
         double dx = t.x - e.x, dy = t.y - e.y, d = sqrt(dx * dx + dy * dy);
@@ -383,7 +539,8 @@ public:
                     if (e.health <= 0) {
                         spawnExplosion(e.x, e.y, e.color, e.type == 3 ? 60 : (e.type == 2 ? 40 : 20)); spawnPowerUp(e.x, e.y); e.active = false;
                         Player& shooter = (b.playerID == 1) ? player1 : player2; shooter.combo++; shooter.comboTime = 60; int pts = 10 * (e.type + 1) * shooter.combo; shooter.score += pts; totalScore += pts;
-                        if (shooter.score > shooter.weaponLevel * 500) shooter.weaponLevel = min(3, shooter.weaponLevel + 1);
+                        if (shooter.score > shooter.weaponLevel * 500 && shooter.weaponLevel < shooter.maxWeaponLevel)
+                            shooter.weaponLevel = min(shooter.maxWeaponLevel, shooter.weaponLevel + 1);
                     } break;
                 }
             }
@@ -415,7 +572,18 @@ public:
         enemies.erase(remove_if(enemies.begin(), enemies.end(), [](Enemy& e) {return !e.active; }), enemies.end());
         powerUps.erase(remove_if(powerUps.begin(), powerUps.end(), [](PowerUp& p) {return !p.active; }), powerUps.end());
     }
-    void applyPowerUp(Player& p, PowerUp& pu) { switch (pu.type) { case 0: p.lives = min(5, p.lives + 1); break; case 1: p.weaponLevel = min(3, p.weaponLevel + 1); break; case 2: p.invincibleTimer = 180; break; } }
+    void applyPowerUp(Player& p, PowerUp& pu) {
+        switch (pu.type) {
+        case 0: p.lives = min(5, p.lives + 1); break;
+        case 1:
+            if (p.weaponLevel < p.maxWeaponLevel) {
+                p.weaponLevel++;
+                // ÂèØÂú®ËøôÈáåÊ∑ªÂä†ÂçáÁ∫ßÊèêÁ§∫
+            }
+            break;
+        case 2: p.invincibleTimer = 180; break;
+        }
+    }
 
 #define IS_UP (g_keys[VK_UP]||g_keys['W']||g_keys[VK_NUMPAD8])
 #define IS_DOWN (g_keys[VK_DOWN]||g_keys['S']||g_keys[VK_NUMPAD2])
@@ -423,358 +591,383 @@ public:
 #define IS_RIGHT (g_keys[VK_RIGHT]||g_keys['D']||g_keys[VK_NUMPAD6])
 #define IS_CONFIRM (g_keys[VK_SPACE]||g_keys[VK_RETURN])
 
-                                                                         void update() {
-                                                                             MSG msg; while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { if (msg.message == WM_QUIT) exit(0); TranslateMessage(&msg); DispatchMessage(&msg); }
+    void update() {
+        MSG msg; while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { if (msg.message == WM_QUIT) exit(0); TranslateMessage(&msg); DispatchMessage(&msg); }
 
-                                                                             // °Ô ◊¥Ã¨±‰ªØ ±£¨Ω´À˘”–∞¥º¸À¯¥Ê±Í÷æ÷√Œ™ true£¨±‹√‚¥©Õ∏
-                                                                             if (state != prevState) {
-                                                                                 enterPressed = escPressed = pPressed = key1Pressed = key2Pressed = key3Pressed = spacePressed = true;
-                                                                                 prevState = state;
-                                                                             }
+        if (state != prevState) {
+            enterPressed = escPressed = pPressed = key1Pressed = key2Pressed = key3Pressed = spacePressed = true;
+            prevState = state;
+        }
 
-                                                                             if (state == STATE_MENU) { handleMenuInput(); return; }
-                                                                             if (state == STATE_MODE_SELECT) { handleModeSelect(); return; }
-                                                                             if (state == STATE_SURVIVAL_MODE_SELECT) { handleSurvivalModeSelect(); return; }
-                                                                             if (state == STATE_DIFF_SELECT) { handleDiffSelect(); return; }
-                                                                             if (state == STATE_MAP_SELECT) { handleMapSelect(); return; }
-                                                                             if (state == STATE_SKIN_SELECT) { handleSkinSelect(); return; }
-                                                                             if (state == STATE_HELP) { if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = STATE_MENU; } if (!g_keys[VK_ESCAPE]) escPressed = false; return; }
-                                                                             if (state == STATE_SETTINGS) { handleSettingsInput(); return; }
-                                                                             if (state == STATE_GAMEOVER || state == STATE_SURVIVAL_SUCCESS || state == STATE_SURVIVAL_FAIL) { handleResultInput(); return; }
+        if (state == STATE_MENU) { handleMenuInput(); return; }
+        if (state == STATE_MODE_SELECT) { handleModeSelect(); return; }
+        if (state == STATE_SURVIVAL_MODE_SELECT) { handleSurvivalModeSelect(); return; }
+        if (state == STATE_DIFF_SELECT) { handleDiffSelect(); return; }
+        if (state == STATE_MAP_SELECT) { handleMapSelect(); return; }
+        if (state == STATE_SKIN_SELECT) { handleSkinSelect(); return; }
+        if (state == STATE_HELP) { if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = STATE_MENU; } if (!g_keys[VK_ESCAPE]) escPressed = false; return; }
+        if (state == STATE_SETTINGS) { handleSettingsInput(); return; }
+        if (state == STATE_GAMEOVER || state == STATE_SURVIVAL_SUCCESS || state == STATE_SURVIVAL_FAIL) { handleResultInput(); return; }
 
-                                                                             if (g_keys['P'] && !pPressed) { pPressed = true; state = (state == STATE_PLAYING) ? STATE_PAUSED : STATE_PLAYING; } if (!g_keys['P']) pPressed = false;
-                                                                             if (state != STATE_PLAYING) return;
+        if (g_keys['P'] && !pPressed) { pPressed = true; state = (state == STATE_PLAYING) ? STATE_PAUSED : STATE_PLAYING; } if (!g_keys['P']) pPressed = false;
+        if (state != STATE_PLAYING) return;
 
-                                                                             if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = STATE_MENU; }
-                                                                             if (!g_keys[VK_ESCAPE]) escPressed = false;
+        if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = STATE_MENU; }
+        if (!g_keys[VK_ESCAPE]) escPressed = false;
 
-                                                                             if (player1.active) {
-                                                                                 if (g_keys['A'])player1.moveLeft(); if (g_keys['D'])player1.moveRight();
-                                                                                 if (g_keys['W'])player1.moveUp(); if (g_keys['S'])player1.moveDown();
-                                                                                 if (g_keys[VK_SPACE])playerShoot(player1);
-                                                                             }
-                                                                             if ((mode == MODE_COOP || mode == MODE_SURVIVAL) && player2.active) {
-                                                                                 if (g_keys[VK_LEFT])player2.moveLeft(); if (g_keys[VK_RIGHT])player2.moveRight();
-                                                                                 if (g_keys[VK_UP])player2.moveUp(); if (g_keys[VK_DOWN])player2.moveDown();
-                                                                                 if (g_keys[VK_RETURN])playerShoot(player2);
-                                                                             }
-                                                                             player1.update(); if (mode == MODE_COOP || mode == MODE_SURVIVAL) player2.update();
+        if (player1.active) {
+            if (g_keys['A'])player1.moveLeft(); if (g_keys['D'])player1.moveRight();
+            if (g_keys['W'])player1.moveUp(); if (g_keys['S'])player1.moveDown();
+            if (g_keys[VK_SPACE])playerShoot(player1);
+        }
+        if ((mode == MODE_COOP || mode == MODE_SURVIVAL) && player2.active) {
+            if (g_keys[VK_LEFT])player2.moveLeft(); if (g_keys[VK_RIGHT])player2.moveRight();
+            if (g_keys[VK_UP])player2.moveUp(); if (g_keys[VK_DOWN])player2.moveDown();
+            if (g_keys[VK_RETURN])playerShoot(player2);
+        }
+        player1.update(); if (mode == MODE_COOP || mode == MODE_SURVIVAL) player2.update();
 
-                                                                             if (mode == MODE_SURVIVAL && survivalTimer > 0) survivalTimer--;
+        if (mode == MODE_SURVIVAL && survivalTimer > 0) survivalTimer--;
 
-                                                                             for (auto& b : bullets) b.update();
-                                                                             for (auto& e : enemies) {
-                                                                                 e.update();
-                                                                                 if (e.canShoot()) {
-                                                                                     if (e.fireLaser && lasers.size() < MAX_LASERS) {
-                                                                                         Player* target = nullptr;
-                                                                                         if ((mode == MODE_COOP || mode == MODE_SURVIVAL) && player1.active && player2.active) target = (rand() % 2) ? &player1 : &player2;
-                                                                                         else if (player1.active) target = &player1;
-                                                                                         else if (player2.active) target = &player2;
-                                                                                         if (target) { lasers.push_back(Laser()); lasers.back().activate(e.x, e.y + 25, target->x, target->y); }
-                                                                                     }
-                                                                                     if ((mode == MODE_COOP || mode == MODE_SURVIVAL) && player1.active && player2.active) enemyShoot(e, rand() % 2 ? player1 : player2);
-                                                                                     else if (player1.active) enemyShoot(e, player1);
-                                                                                     else if (player2.active) enemyShoot(e, player2);
-                                                                                 }
-                                                                             }
-                                                                             for (auto& pu : powerUps) pu.update();
-                                                                             updateLasers();
-                                                                             updateParticles();
-                                                                             handleCollisions();
+        for (auto& b : bullets) b.update();
+        for (auto& e : enemies) {
+            e.update();
+            if (e.canShoot()) {
+                if (e.fireLaser && lasers.size() < MAX_LASERS) {
+                    Player* target = nullptr;
+                    if ((mode == MODE_COOP || mode == MODE_SURVIVAL) && player1.active && player2.active) target = (rand() % 2) ? &player1 : &player2;
+                    else if (player1.active) target = &player1;
+                    else if (player2.active) target = &player2;
+                    if (target) { lasers.push_back(Laser()); lasers.back().activate(e.x, e.y + 25, target->x, target->y); }
+                }
+                if ((mode == MODE_COOP || mode == MODE_SURVIVAL) && player1.active && player2.active) enemyShoot(e, rand() % 2 ? player1 : player2);
+                else if (player1.active) enemyShoot(e, player1);
+                else if (player2.active) enemyShoot(e, player2);
+            }
+        }
+        for (auto& pu : powerUps) pu.update();
+        updateLasers();
+        updateParticles();
+        handleCollisions();
 
-                                                                             if (mode == MODE_SURVIVAL) {
-                                                                                 if (enemySpawnTimer++ >= max(10, 25 - difficulty * 1)) {
-                                                                                     Player* target = nullptr;
-                                                                                     if ((mode == MODE_SURVIVAL || mode == MODE_COOP) && player1.active && player2.active) target = (rand() % 2) ? &player1 : &player2;
-                                                                                     else if (player1.active) target = &player1;
-                                                                                     else if (player2.active) target = &player2;
-                                                                                     if (target) spawnEnemySurvival(target);
-                                                                                     enemySpawnTimer = 0;
-                                                                                 }
-                                                                                 if (survivalTimer % (60 * 30) == 0 && survivalTimer > 0) difficulty++;
-                                                                             }
-                                                                             else {
-                                                                                 enemySpawnTimer++;
-                                                                                 if (enemySpawnTimer >= max(10, (int)(baseSpawnRate - difficulty * 1.5))) { spawnEnemy(); enemySpawnTimer = 0; }
-                                                                                 bossSpawnTimer++;
-                                                                                 if (bossSpawnTimer >= (mode == MODE_COOP ? 700 : 1100)) { spawnBoss(); bossSpawnTimer = 0; }
-                                                                                 if (totalScore > difficulty * 1500) { difficulty++; maxEnemiesOnScreen = min(MAX_ENEMIES, g_diffStartEnemies[diffLevel] + difficulty * 2); }
-                                                                             }
-                                                                         }
+        if (mode == MODE_SURVIVAL) {
+            if (enemySpawnTimer++ >= max(10, 25 - difficulty * 1)) {
+                Player* target = nullptr;
+                if ((mode == MODE_SURVIVAL || mode == MODE_COOP) && player1.active && player2.active) target = (rand() % 2) ? &player1 : &player2;
+                else if (player1.active) target = &player1;
+                else if (player2.active) target = &player2;
+                if (target) spawnEnemySurvival(target);
+                enemySpawnTimer = 0;
+            }
+            if (survivalTimer % (60 * 30) == 0 && survivalTimer > 0) difficulty++;
+        }
+        else {
+            enemySpawnTimer++;
+            if (enemySpawnTimer >= max(10, (int)(baseSpawnRate - difficulty * 1.5))) { spawnEnemy(); enemySpawnTimer = 0; }
+            bossSpawnTimer++;
+            if (bossSpawnTimer >= (mode == MODE_COOP ? 700 : 1100)) { spawnBoss(); bossSpawnTimer = 0; }
+            if (totalScore > difficulty * 1500) { difficulty++; maxEnemiesOnScreen = min(MAX_ENEMIES, g_diffStartEnemies[diffLevel] + difficulty * 2); }
+        }
+    }
 
-                                                                         void handleMenuInput() {
-                                                                             if (g_keys[VK_RETURN] && !enterPressed) { enterPressed = true; state = STATE_MODE_SELECT; menuSel = 0; }
-                                                                             if (!g_keys[VK_RETURN]) enterPressed = false;
-                                                                             if (g_keys['H'] && !key1Pressed) { key1Pressed = true; state = STATE_HELP; }
-                                                                             if (!g_keys['H']) key1Pressed = false;
-                                                                             if (g_keys['S'] && !key1Pressed) { key1Pressed = true; state = STATE_SETTINGS; menuSel = 0; }
-                                                                             if (!g_keys['S']) key1Pressed = false;
-                                                                             if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; exit(0); }
-                                                                             if (!g_keys[VK_ESCAPE]) escPressed = false;
-                                                                         }
-                                                                         void handleSettingsInput() {
-                                                                             if (IS_UP) { if (!key1Pressed) { key1Pressed = true; menuSel = (menuSel - 1 + 2) % 2; } }
-                                                                             else key1Pressed = false;
-                                                                             if (IS_DOWN) { if (!key2Pressed) { key2Pressed = true; menuSel = (menuSel + 1) % 2; } }
-                                                                             else key2Pressed = false;
-                                                                             if (IS_CONFIRM && !spacePressed) {
-                                                                                 spacePressed = true;
-                                                                                 if (menuSel == 0) showParticles = !showParticles;
-                                                                                 else state = STATE_MENU;
-                                                                             }
-                                                                             if (!IS_CONFIRM) spacePressed = false;
-                                                                             if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = STATE_MENU; }
-                                                                             if (!g_keys[VK_ESCAPE]) escPressed = false;
-                                                                         }
-                                                                         void handleModeSelect() {
-                                                                             if (IS_UP) { if (!key1Pressed) { key1Pressed = true; menuSel = (menuSel - 1 + 3) % 3; } }
-                                                                             else key1Pressed = false;
-                                                                             if (IS_DOWN) { if (!key2Pressed) { key2Pressed = true; menuSel = (menuSel + 1) % 3; } }
-                                                                             else key2Pressed = false;
-                                                                             if (IS_CONFIRM && !spacePressed) {
-                                                                                 spacePressed = true;
-                                                                                 if (menuSel == 0) { mode = MODE_SINGLE; state = STATE_DIFF_SELECT; diffSelectIndex = 1; menuSel = 1; }
-                                                                                 else if (menuSel == 1) { mode = MODE_COOP; state = STATE_DIFF_SELECT; diffSelectIndex = 1; menuSel = 1; }
-                                                                                 else if (menuSel == 2) { state = STATE_SURVIVAL_MODE_SELECT; menuSel = 0; }
-                                                                             }
-                                                                             if (!IS_CONFIRM) spacePressed = false;
-                                                                             if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = STATE_MENU; menuSel = 0; }
-                                                                             if (!g_keys[VK_ESCAPE]) escPressed = false;
-                                                                         }
-                                                                         void handleSurvivalModeSelect() {
-                                                                             if (IS_UP) { if (!key1Pressed) { key1Pressed = true; menuSel = (menuSel - 1 + 2) % 2; } }
-                                                                             else key1Pressed = false;
-                                                                             if (IS_DOWN) { if (!key2Pressed) { key2Pressed = true; menuSel = (menuSel + 1) % 2; } }
-                                                                             else key2Pressed = false;
-                                                                             if (IS_CONFIRM && !spacePressed) {
-                                                                                 spacePressed = true;
-                                                                                 if (menuSel == 0) { mode = MODE_SURVIVAL; survivalPlayerCount = 1; state = STATE_DIFF_SELECT; diffSelectIndex = 1; menuSel = 1; }
-                                                                                 else if (menuSel == 1) { mode = MODE_SURVIVAL; survivalPlayerCount = 2; state = STATE_DIFF_SELECT; diffSelectIndex = 1; menuSel = 1; }
-                                                                             }
-                                                                             if (!IS_CONFIRM) spacePressed = false;
-                                                                             if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = STATE_MODE_SELECT; menuSel = 0; }
-                                                                             if (!g_keys[VK_ESCAPE]) escPressed = false;
-                                                                         }
-                                                                         void handleDiffSelect() {
-                                                                             if (IS_UP) { if (!key1Pressed) { key1Pressed = true; diffSelectIndex = (diffSelectIndex - 1 + DIFF_COUNT) % DIFF_COUNT; } }
-                                                                             else key1Pressed = false;
-                                                                             if (IS_DOWN) { if (!key2Pressed) { key2Pressed = true; diffSelectIndex = (diffSelectIndex + 1) % DIFF_COUNT; } }
-                                                                             else key2Pressed = false;
-                                                                             if (IS_CONFIRM && !spacePressed) {
-                                                                                 spacePressed = true;
-                                                                                 diffLevel = (DifficultyLevel)diffSelectIndex; baseSpawnRate = g_diffSpawnRate[diffLevel];
-                                                                                 maxEnemiesOnScreen = (mode == MODE_SURVIVAL) ? MAX_ENEMIES : g_diffStartEnemies[diffLevel];
-                                                                                 state = STATE_MAP_SELECT; mapSelectIndex = 0; menuSel = 0;
-                                                                             }
-                                                                             if (!IS_CONFIRM) spacePressed = false;
-                                                                             if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = (mode == MODE_SURVIVAL) ? STATE_SURVIVAL_MODE_SELECT : STATE_MODE_SELECT; menuSel = 0; }
-                                                                             if (!g_keys[VK_ESCAPE]) escPressed = false;
-                                                                         }
-                                                                         void handleMapSelect() {
-                                                                             if (IS_UP) { if (!key1Pressed) { key1Pressed = true; mapSelectIndex = (mapSelectIndex - 1 + MAP_COUNT) % MAP_COUNT; } }
-                                                                             else key1Pressed = false;
-                                                                             if (IS_DOWN) { if (!key2Pressed) { key2Pressed = true; mapSelectIndex = (mapSelectIndex + 1) % MAP_COUNT; } }
-                                                                             else key2Pressed = false;
-                                                                             if (IS_CONFIRM && !spacePressed) {
-                                                                                 spacePressed = true;
-                                                                                 mapType = (MapType)mapSelectIndex; generateBackground();
-                                                                                 state = STATE_SKIN_SELECT; selectingPlayer = 1; skinSelectIndex = 0;
-                                                                             }
-                                                                             if (!IS_CONFIRM) spacePressed = false;
-                                                                             if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = STATE_DIFF_SELECT; }
-                                                                             if (!g_keys[VK_ESCAPE]) escPressed = false;
-                                                                         }
-                                                                         void handleSkinSelect() {
-                                                                             if (IS_LEFT && !key1Pressed) { key1Pressed = true; skinSelectIndex = (skinSelectIndex - 1 + SKIN_COUNT) % SKIN_COUNT; }
-                                                                             else if (!IS_LEFT) key1Pressed = false;
-                                                                             if (IS_RIGHT && !key2Pressed) { key2Pressed = true; skinSelectIndex = (skinSelectIndex + 1) % SKIN_COUNT; }
-                                                                             else if (!IS_RIGHT) key2Pressed = false;
+    // ---- ËæìÂÖ•Â§ÑÁêÜÂáΩÊï∞ÔºàÁï•Ôºå‰∏éÂéüÊù•Áõ∏ÂêåÔºå‰ΩÜ‰øùÁïô‰∫Ü‰øÆÊîπÔºâ ----
+    void handleMenuInput() {
+        if (g_keys[VK_RETURN] && !enterPressed) { enterPressed = true; state = STATE_MODE_SELECT; menuSel = 0; }
+        if (!g_keys[VK_RETURN]) enterPressed = false;
+        if (g_keys['H'] && !key1Pressed) { key1Pressed = true; state = STATE_HELP; }
+        if (!g_keys['H']) key1Pressed = false;
+        if (g_keys['S'] && !key1Pressed) { key1Pressed = true; state = STATE_SETTINGS; menuSel = 0; }
+        if (!g_keys['S']) key1Pressed = false;
+        if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; exit(0); }
+        if (!g_keys[VK_ESCAPE]) escPressed = false;
+    }
+    void handleSettingsInput() {
+        if (IS_UP) { if (!key1Pressed) { key1Pressed = true; menuSel = (menuSel - 1 + 2) % 2; } }
+        else key1Pressed = false;
+        if (IS_DOWN) { if (!key2Pressed) { key2Pressed = true; menuSel = (menuSel + 1) % 2; } }
+        else key2Pressed = false;
+        if (IS_CONFIRM && !spacePressed) {
+            spacePressed = true;
+            if (menuSel == 0) showParticles = !showParticles;
+            else state = STATE_MENU;
+        }
+        if (!IS_CONFIRM) spacePressed = false;
+        if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = STATE_MENU; }
+        if (!g_keys[VK_ESCAPE]) escPressed = false;
+    }
+    void handleModeSelect() {
+        if (IS_UP) { if (!key1Pressed) { key1Pressed = true; menuSel = (menuSel - 1 + 3) % 3; } }
+        else key1Pressed = false;
+        if (IS_DOWN) { if (!key2Pressed) { key2Pressed = true; menuSel = (menuSel + 1) % 3; } }
+        else key2Pressed = false;
+        if (IS_CONFIRM && !spacePressed) {
+            spacePressed = true;
+            if (menuSel == 0) { mode = MODE_SINGLE; state = STATE_DIFF_SELECT; diffSelectIndex = 1; menuSel = 1; }
+            else if (menuSel == 1) { mode = MODE_COOP; state = STATE_DIFF_SELECT; diffSelectIndex = 1; menuSel = 1; }
+            else if (menuSel == 2) { state = STATE_SURVIVAL_MODE_SELECT; menuSel = 0; }
+        }
+        if (!IS_CONFIRM) spacePressed = false;
+        if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = STATE_MENU; menuSel = 0; }
+        if (!g_keys[VK_ESCAPE]) escPressed = false;
+    }
+    void handleSurvivalModeSelect() {
+        if (IS_UP) { if (!key1Pressed) { key1Pressed = true; menuSel = (menuSel - 1 + 2) % 2; } }
+        else key1Pressed = false;
+        if (IS_DOWN) { if (!key2Pressed) { key2Pressed = true; menuSel = (menuSel + 1) % 2; } }
+        else key2Pressed = false;
+        if (IS_CONFIRM && !spacePressed) {
+            spacePressed = true;
+            if (menuSel == 0) { mode = MODE_SURVIVAL; survivalPlayerCount = 1; state = STATE_DIFF_SELECT; diffSelectIndex = 1; menuSel = 1; }
+            else if (menuSel == 1) { mode = MODE_SURVIVAL; survivalPlayerCount = 2; state = STATE_DIFF_SELECT; diffSelectIndex = 1; menuSel = 1; }
+        }
+        if (!IS_CONFIRM) spacePressed = false;
+        if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = STATE_MODE_SELECT; menuSel = 0; }
+        if (!g_keys[VK_ESCAPE]) escPressed = false;
+    }
+    void handleDiffSelect() {
+        if (IS_UP) { if (!key1Pressed) { key1Pressed = true; diffSelectIndex = (diffSelectIndex - 1 + DIFF_COUNT) % DIFF_COUNT; } }
+        else key1Pressed = false;
+        if (IS_DOWN) { if (!key2Pressed) { key2Pressed = true; diffSelectIndex = (diffSelectIndex + 1) % DIFF_COUNT; } }
+        else key2Pressed = false;
+        if (IS_CONFIRM && !spacePressed) {
+            spacePressed = true;
+            diffLevel = (DifficultyLevel)diffSelectIndex; baseSpawnRate = g_diffSpawnRate[diffLevel];
+            maxEnemiesOnScreen = (mode == MODE_SURVIVAL) ? MAX_ENEMIES : g_diffStartEnemies[diffLevel];
+            state = STATE_MAP_SELECT; mapSelectIndex = 0; menuSel = 0;
+        }
+        if (!IS_CONFIRM) spacePressed = false;
+        if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = (mode == MODE_SURVIVAL) ? STATE_SURVIVAL_MODE_SELECT : STATE_MODE_SELECT; menuSel = 0; }
+        if (!g_keys[VK_ESCAPE]) escPressed = false;
+    }
+    void handleMapSelect() {
+        if (IS_UP) { if (!key1Pressed) { key1Pressed = true; mapSelectIndex = (mapSelectIndex - 1 + MAP_COUNT) % MAP_COUNT; } }
+        else key1Pressed = false;
+        if (IS_DOWN) { if (!key2Pressed) { key2Pressed = true; mapSelectIndex = (mapSelectIndex + 1) % MAP_COUNT; } }
+        else key2Pressed = false;
+        if (IS_CONFIRM && !spacePressed) {
+            spacePressed = true;
+            mapType = (MapType)mapSelectIndex; generateBackground();
+            state = STATE_SKIN_SELECT; selectingPlayer = 1; skinSelectIndex = 0;
+        }
+        if (!IS_CONFIRM) spacePressed = false;
+        if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = STATE_DIFF_SELECT; }
+        if (!g_keys[VK_ESCAPE]) escPressed = false;
+    }
+    void handleSkinSelect() {
+        if (IS_LEFT && !key1Pressed) { key1Pressed = true; skinSelectIndex = (skinSelectIndex - 1 + SKIN_COUNT) % SKIN_COUNT; }
+        else if (!IS_LEFT) key1Pressed = false;
+        if (IS_RIGHT && !key2Pressed) { key2Pressed = true; skinSelectIndex = (skinSelectIndex + 1) % SKIN_COUNT; }
+        else if (!IS_RIGHT) key2Pressed = false;
 
-                                                                             if (IS_CONFIRM && !spacePressed) {
-                                                                                 spacePressed = true;
-                                                                                 if (selectingPlayer == 1) {
-                                                                                     player1.setSkin(skinSelectIndex); p1Skin = skinSelectIndex;
-                                                                                     if (mode == MODE_COOP || (mode == MODE_SURVIVAL && survivalPlayerCount == 2)) { selectingPlayer = 2; skinSelectIndex = 0; }
-                                                                                     else startNewGame();
-                                                                                 }
-                                                                                 else { player2.setSkin(skinSelectIndex); p2Skin = skinSelectIndex; startNewGame(); }
-                                                                             }
-                                                                             if (!IS_CONFIRM) spacePressed = false;
-                                                                             if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = STATE_MAP_SELECT; }
-                                                                             if (!g_keys[VK_ESCAPE]) escPressed = false;
-                                                                         }
-                                                                         void handleResultInput() {
-                                                                             if (g_keys[VK_RETURN] && !enterPressed) { enterPressed = true; state = STATE_MODE_SELECT; menuSel = 0; }
-                                                                             if (!g_keys[VK_RETURN]) enterPressed = false;
-                                                                             if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = STATE_MENU; }
-                                                                             if (!g_keys[VK_ESCAPE]) escPressed = false;
-                                                                         }
+        if (IS_CONFIRM && !spacePressed) {
+            spacePressed = true;
+            if (selectingPlayer == 1) {
+                player1.setSkin(skinSelectIndex); p1Skin = skinSelectIndex;
+                if (mode == MODE_COOP || (mode == MODE_SURVIVAL && survivalPlayerCount == 2)) { selectingPlayer = 2; skinSelectIndex = 0; }
+                else startNewGame();
+            }
+            else { player2.setSkin(skinSelectIndex); p2Skin = skinSelectIndex; startNewGame(); }
+        }
+        if (!IS_CONFIRM) spacePressed = false;
+        if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = STATE_MAP_SELECT; }
+        if (!g_keys[VK_ESCAPE]) escPressed = false;
+    }
+    void handleResultInput() {
+        if (g_keys[VK_RETURN] && !enterPressed) { enterPressed = true; state = STATE_MODE_SELECT; menuSel = 0; }
+        if (!g_keys[VK_RETURN]) enterPressed = false;
+        if (g_keys[VK_ESCAPE] && !escPressed) { escPressed = true; state = STATE_MENU; }
+        if (!g_keys[VK_ESCAPE]) escPressed = false;
+    }
 
-                                                                         void startNewGame() {
-                                                                             player1 = Player(1); player1.setSkin(p1Skin);
-                                                                             player2 = Player(2); player2.setSkin(p2Skin);
-                                                                             if (mode == MODE_SURVIVAL && survivalPlayerCount == 1) player2.active = false;
-                                                                             bullets.clear(); enemies.clear(); particles.clear(); powerUps.clear(); lasers.clear();
-                                                                             difficulty = 1;
-                                                                             if (mode == MODE_SURVIVAL) { maxEnemiesOnScreen = MAX_ENEMIES; survivalTimer = SURVIVAL_DURATION; }
-                                                                             enemySpawnTimer = 0; bossSpawnTimer = 0; totalScore = 0; state = STATE_PLAYING;
-                                                                         }
+    void startNewGame() {
+        player1 = Player(1); player1.setSkin(p1Skin);
+        player2 = Player(2); player2.setSkin(p2Skin);
+        if (mode == MODE_SURVIVAL && survivalPlayerCount == 1) player2.active = false;
+        bullets.clear(); enemies.clear(); particles.clear(); powerUps.clear(); lasers.clear();
+        difficulty = 1;
+        if (mode == MODE_SURVIVAL) { maxEnemiesOnScreen = MAX_ENEMIES; survivalTimer = SURVIVAL_DURATION; }
+        enemySpawnTimer = 0; bossSpawnTimer = 0; totalScore = 0; state = STATE_PLAYING;
+    }
 
-                                                                         void drawBreadcrumb(const TCHAR* path) { settextstyle(18, 0, _T("Arial")); settextcolor(RGB(150, 150, 150)); outtextxy(10, 10, path); }
+    // ‚òÖ ËæÖÂä©ÂáΩÊï∞ÔºöËé∑ÂèñÊ≠¶Âô®Á≠âÁ∫ßÂêçÁß∞ÔºàÂåÖÂê´ÁªàÊûÅÊ≠¶Âô®ÂêçÁß∞Ôºâ
+    const TCHAR* getWeaponLevelName(const Player& p) {
+        static TCHAR buf[40];
+        if (p.weaponLevel <= 3) {
+            _stprintf_s(buf, _T("Lv.%d"), p.weaponLevel);
+        }
+        else if (p.weaponLevel == 4) {
+            _stprintf_s(buf, _T("‚òÖ Âº∫Âåñ Lv.4"));
+        }
+        else {
+            const TCHAR* ultimateNames[SKIN_COUNT] = {
+                _T("ËÉΩÈáèÂºπÂπï"), _T("ÁÉàÁÑ∞È£éÊö¥"), _T("ÂÜ∞Êô∂Êï£Â∞Ñ"),
+                _T("Èõ∑ÈúÜ‰∏áÈíß"), _T("ÈªÑÈáëÁàÜË£Ç"), _T("ÊöóÂΩ±Á™ÅË¢≠")
+            };
+            _stprintf_s(buf, _T("‚òÖ‚òÖ %s"), ultimateNames[p.skinType]);
+        }
+        return buf;
+    }
 
-                                                                         void render() {
-                                                                             BeginBatchDraw(); if (bg) putimage(0, 0, bg);
-                                                                             if (state == STATE_MENU) { drawBreadcrumb(_T("÷˜≤Àµ•")); drawMenu(); }
-                                                                             else if (state == STATE_MODE_SELECT) { drawBreadcrumb(_T("÷˜≤Àµ• > ƒ£ Ω—°‘Ò")); drawModeSelect(); }
-                                                                             else if (state == STATE_SURVIVAL_MODE_SELECT) { drawBreadcrumb(_T("÷˜≤Àµ• > ƒ£ Ω—°‘Ò > …˙¥Ê»À ˝")); drawSurvivalModeSelect(); }
-                                                                             else if (state == STATE_DIFF_SELECT) {
-                                                                                 TCHAR path[100]; if (mode == MODE_SURVIVAL) _stprintf_s(path, _T("÷˜≤Àµ• > ƒ£ Ω—°‘Ò > …˙¥Ê»À ˝ > ƒ—∂»—°‘Ò")); else _stprintf_s(path, _T("÷˜≤Àµ• > ƒ£ Ω—°‘Ò > ƒ—∂»—°‘Ò"));
-                                                                                 drawBreadcrumb(path); drawDiffSelect();
-                                                                             }
-                                                                             else if (state == STATE_MAP_SELECT) {
-                                                                                 TCHAR path[100]; if (mode == MODE_SURVIVAL) _stprintf_s(path, _T("÷˜≤Àµ• > ƒ£ Ω—°‘Ò > …˙¥Ê»À ˝ > ƒ—∂»—°‘Ò > µÿÕº—°‘Ò")); else _stprintf_s(path, _T("÷˜≤Àµ• > ƒ£ Ω—°‘Ò > ƒ—∂»—°‘Ò > µÿÕº—°‘Ò"));
-                                                                                 drawBreadcrumb(path); drawMapSelect();
-                                                                             }
-                                                                             else if (state == STATE_SKIN_SELECT) {
-                                                                                 TCHAR path[100]; if (mode == MODE_SURVIVAL) _stprintf_s(path, _T("÷˜≤Àµ• > ƒ£ Ω—°‘Ò > …˙¥Ê»À ˝ > ƒ—∂»—°‘Ò > µÿÕº—°‘Ò > ∆§∑Ù—°‘Ò")); else _stprintf_s(path, _T("÷˜≤Àµ• > ƒ£ Ω—°‘Ò > ƒ—∂»—°‘Ò > µÿÕº—°‘Ò > ∆§∑Ù—°‘Ò"));
-                                                                                 drawBreadcrumb(path); drawSkinSelect();
-                                                                             }
-                                                                             else if (state == STATE_HELP) { drawBreadcrumb(_T("÷˜≤Àµ• > ∞Ô÷˙")); drawHelp(); }
-                                                                             else if (state == STATE_SETTINGS) { drawBreadcrumb(_T("÷˜≤Àµ• > …Ë÷√")); drawSettings(); }
-                                                                             else if (state == STATE_PLAYING || state == STATE_PAUSED) {
-                                                                                 for (auto& pu : powerUps) pu.draw(); for (auto& b : bullets) b.draw(); for (auto& e : enemies) e.draw(); for (auto& l : lasers) l.draw();
-                                                                                 player1.draw(); if (mode == MODE_COOP || (mode == MODE_SURVIVAL && survivalPlayerCount == 2)) player2.draw(); drawParticles(); drawUI();
-                                                                                 if (state == STATE_PAUSED) { drawPause(); }
-                                                                             }
-                                                                             else if (state == STATE_GAMEOVER) drawGameOver();
-                                                                             else if (state == STATE_SURVIVAL_SUCCESS) drawSurvivalResult(true);
-                                                                             else if (state == STATE_SURVIVAL_FAIL) drawSurvivalResult(false);
-                                                                             EndBatchDraw();
-                                                                         }
+    void drawBreadcrumb(const TCHAR* path) { settextstyle(18, 0, _T("Arial")); settextcolor(RGB(150, 150, 150)); outtextxy(10, 10, path); }
 
-                                                                         void drawMenu() {
-                                                                             setbkmode(TRANSPARENT); settextstyle(55, 0, _T("Arial Black")); settextcolor(RGB(0, 200, 255));
-                                                                             outtextxy(SCREEN_WIDTH / 2 - 200, 100, _T("Ã´ø’…‰ª˜”Œœ∑"));
-                                                                             settextstyle(25, 0, _T("Arial")); settextcolor(RGB(255, 255, 255));
-                                                                             outtextxy(SCREEN_WIDTH / 2 - 160, 240, _T("∞¥ ENTER ø™ º")); outtextxy(SCREEN_WIDTH / 2 - 140, 280, _T("∞¥ S …Ë÷√"));
-                                                                             outtextxy(SCREEN_WIDTH / 2 - 120, 320, _T("∞¥ H ∞Ô÷˙")); outtextxy(SCREEN_WIDTH / 2 - 110, 360, _T("∞¥ ESC ÕÀ≥ˆ"));
-                                                                             TCHAR t[50]; _stprintf_s(t, _T("◊Ó∏ﬂ∑÷: %d"), highScore); settextcolor(RGB(255, 215, 0)); outtextxy(SCREEN_WIDTH / 2 - 70, 420, t);
-                                                                         }
-                                                                         void drawSettings() {
-                                                                             setbkmode(TRANSPARENT); setfillcolor(RGB(0, 0, 0)); solidrectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-                                                                             settextstyle(35, 0, _T("Arial Black")); settextcolor(RGB(0, 200, 255)); outtextxy(SCREEN_WIDTH / 2 - 60, 150, _T("…Ë÷√"));
-                                                                             settextstyle(25, 0, _T("Arial"));
-                                                                             const TCHAR* opts[] = { _T("¡£◊”Ãÿ–ß"), _T("∑µªÿ") };
-                                                                             for (int i = 0; i < 2; i++) {
-                                                                                 TCHAR buf[40];
-                                                                                 if (i == 0) _stprintf_s(buf, _T("%s: %s"), opts[i], showParticles ? _T("ø™∆Ù") : _T("πÿ±’"));
-                                                                                 else _stprintf_s(buf, _T("%s"), opts[i]);
-                                                                                 settextcolor(i == menuSel ? RGB(255, 255, 0) : RGB(255, 255, 255));
-                                                                                 outtextxy(SCREEN_WIDTH / 2 - 100, 260 + i * 60, buf);
-                                                                             }
-                                                                             settextstyle(18, 0, _T("Arial")); settextcolor(RGB(200, 200, 200));
-                                                                             outtextxy(SCREEN_WIDTH / 2 - 150, 450, _T("W/S “∆∂Ø ø’∏Ò/ªÿ≥µ «–ªª  ESC ∑µªÿ"));
-                                                                         }
-                                                                         void drawHelp() {
-                                                                             setfillcolor(RGB(0, 0, 0)); solidrectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT); setbkmode(TRANSPARENT);
-                                                                             settextstyle(35, 0, _T("Arial Black")); settextcolor(RGB(0, 200, 255)); outtextxy(SCREEN_WIDTH / 2 - 50, 30, _T("∞Ô÷˙"));
-                                                                             settextstyle(22, 0, _T("Arial")); settextcolor(RGB(255, 255, 255));
-                                                                             outtextxy(80, 100, _T("°æ≤Ÿ◊˜Àµ√˜°ø")); outtextxy(80, 140, _T("ÕÊº“1: W/A/S/D “∆∂Ø, ø’∏Ò…‰ª˜"));
-                                                                             outtextxy(80, 175, _T("ÕÊº“2: ∑ΩœÚº¸ “∆∂Ø, ªÿ≥µ…‰ª˜ (À´»À)"));
-                                                                             outtextxy(80, 210, _T("P ‘›Õ£, ESC ∑µªÿ, H ∞Ô÷˙"));
-                                                                             outtextxy(80, 260, _T("°æµ¿æﬂÀµ√˜°ø")); outtextxy(80, 300, _T("∫Ï…´ Æ◊÷: …˙√¸+1"));
-                                                                             outtextxy(80, 335, _T("Ω…´–«–«: Œ‰∆˜…˝º∂")); outtextxy(80, 370, _T("¿∂…´¡‚–Œ: 3√Îª§∂‹"));
-                                                                             settextstyle(25, 0, _T("Arial")); settextcolor(RGB(255, 215, 0));
-                                                                             outtextxy(SCREEN_WIDTH / 2 - 120, 450, _T("÷∆◊˜»À£∫rongzhong6  fufu"));
-                                                                             settextstyle(16, 0, _T("Arial")); settextcolor(RGB(180, 180, 180));
-                                                                             TCHAR ver[30]; _stprintf_s(ver, _T("∞Ê±æ£∫%s"), GAME_VERSION); outtextxy(SCREEN_WIDTH - 120, SCREEN_HEIGHT - 30, ver);
-                                                                         }
-                                                                         void drawModeSelect() {
-                                                                             setbkmode(TRANSPARENT); settextstyle(35, 0, _T("Arial Black")); settextcolor(RGB(0, 200, 255));
-                                                                             outtextxy(SCREEN_WIDTH / 2 - 160, 150, _T("—°‘Òƒ£ Ω")); settextstyle(25, 0, _T("Arial"));
-                                                                             const TCHAR* modes[] = { _T("µ•»À¥≥πÿ"), _T("À´»À¥≥πÿ"), _T("…˙¥ÊÃÙ’Ω") };
-                                                                             for (int i = 0; i < 3; i++) { settextcolor(i == menuSel ? RGB(255, 255, 0) : RGB(255, 255, 255)); outtextxy(SCREEN_WIDTH / 2 - 100, 260 + i * 60, modes[i]); }
-                                                                             settextstyle(18, 0, _T("Arial")); settextcolor(RGB(200, 200, 200)); outtextxy(SCREEN_WIDTH / 2 - 130, 500, _T("W/S “∆∂Ø ø’∏Ò/ªÿ≥µ »∑»œ  ESC ∑µªÿ"));
-                                                                         }
-                                                                         void drawSurvivalModeSelect() {
-                                                                             setbkmode(TRANSPARENT); settextstyle(35, 0, _T("Arial Black")); settextcolor(RGB(0, 200, 255));
-                                                                             outtextxy(SCREEN_WIDTH / 2 - 160, 150, _T("…˙¥ÊÃÙ’Ω - —°‘Ò»À ˝")); settextstyle(25, 0, _T("Arial"));
-                                                                             const TCHAR* opts[] = { _T("µ•»À"), _T("À´»À") };
-                                                                             for (int i = 0; i < 2; i++) { settextcolor(i == menuSel ? RGB(255, 255, 0) : RGB(255, 255, 255)); outtextxy(SCREEN_WIDTH / 2 - 100, 260 + i * 60, opts[i]); }
-                                                                             settextstyle(18, 0, _T("Arial")); settextcolor(RGB(200, 200, 200)); outtextxy(SCREEN_WIDTH / 2 - 130, 500, _T("W/S “∆∂Ø ø’∏Ò/ªÿ≥µ »∑»œ  ESC ∑µªÿ"));
-                                                                         }
-                                                                         void drawDiffSelect() {
-                                                                             setbkmode(TRANSPARENT); settextstyle(35, 0, _T("Arial Black")); settextcolor(RGB(0, 200, 255));
-                                                                             outtextxy(SCREEN_WIDTH / 2 - 140, 150, _T("—°‘Òƒ—∂»")); settextstyle(25, 0, _T("Arial"));
-                                                                             for (int i = 0; i < DIFF_COUNT; i++) { TCHAR buf[30]; _stprintf_s(buf, _T("%s"), g_diffNames[i]); settextcolor(i == diffSelectIndex ? RGB(255, 255, 0) : RGB(255, 255, 255)); outtextxy(SCREEN_WIDTH / 2 - 100, 260 + i * 60, buf); }
-                                                                             settextstyle(18, 0, _T("Arial")); settextcolor(RGB(200, 200, 200)); outtextxy(SCREEN_WIDTH / 2 - 130, 500, _T("W/S “∆∂Ø ø’∏Ò/ªÿ≥µ »∑»œ  ESC ∑µªÿ"));
-                                                                         }
-                                                                         void drawMapSelect() {
-                                                                             setbkmode(TRANSPARENT); settextstyle(35, 0, _T("Arial Black")); settextcolor(RGB(0, 200, 255));
-                                                                             outtextxy(SCREEN_WIDTH / 2 - 140, 150, _T("—°‘ÒµÿÕº")); settextstyle(25, 0, _T("Arial"));
-                                                                             for (int i = 0; i < MAP_COUNT; i++) { TCHAR buf[30]; _stprintf_s(buf, _T("%s"), g_mapNames[i]); settextcolor(i == mapSelectIndex ? RGB(255, 255, 0) : RGB(255, 255, 255)); outtextxy(SCREEN_WIDTH / 2 - 100, 260 + i * 60, buf); }
-                                                                             settextstyle(18, 0, _T("Arial")); settextcolor(RGB(200, 200, 200)); outtextxy(SCREEN_WIDTH / 2 - 130, 500, _T("W/S “∆∂Ø ø’∏Ò/ªÿ≥µ »∑»œ  ESC ∑µªÿ"));
-                                                                         }
-                                                                         void drawSkinSelect() {
-                                                                             setbkmode(TRANSPARENT); settextstyle(30, 0, _T("Arial Black")); settextcolor(RGB(0, 200, 255));
-                                                                             TCHAR title[50]; _stprintf_s(title, _T("—°‘Ò∆§∑Ù - ÕÊº“ %d"), selectingPlayer); outtextxy(SCREEN_WIDTH / 2 - 140, 50, title);
-                                                                             Player preview(selectingPlayer); preview.setSkin(skinSelectIndex); preview.x = SCREEN_WIDTH / 2; preview.y = 200; preview.draw();
-                                                                             settextstyle(25, 0, _T("Arial")); settextcolor(RGB(255, 215, 0));
-                                                                             TCHAR name[30]; _stprintf_s(name, _T("<< %s >>"), g_skins[skinSelectIndex].name); outtextxy(SCREEN_WIDTH / 2 - 60, 280, name);
-                                                                             settextstyle(18, 0, _T("Arial")); settextcolor(RGB(200, 200, 200));
-                                                                             outtextxy(SCREEN_WIDTH / 2 - 170, 350, _T("A/D ªÚ °˚ °˙ «–ªª  ø’∏Ò/ªÿ≥µ »∑»œ  ESC ∑µªÿ"));
-                                                                             settextstyle(16, 0, _T("Arial"));
-                                                                             int startX = SCREEN_WIDTH / 2 - 280;
-                                                                             for (int i = 0; i < SKIN_COUNT; i++) { int x = startX + i * 95; settextcolor(i == skinSelectIndex ? RGB(255, 255, 0) : RGB(150, 150, 150)); TCHAR mark[4]; _stprintf_s(mark, i == skinSelectIndex ? _T("[*]") : _T("[ ]")); outtextxy(x, 500, mark); settextcolor(RGB(255, 255, 255)); outtextxy(x + 20, 500, g_skins[i].name); }
-                                                                         }
-                                                                         void drawUI() {
-                                                                             setbkmode(TRANSPARENT); settextstyle(20, 0, _T("Arial")); TCHAR t[50];
-                                                                             settextcolor(RGB(0, 200, 255)); _stprintf_s(t, _T("P1:%d …˙√¸:%d"), player1.score, player1.lives); outtextxy(20, 20, t);
-                                                                             if (mode == MODE_COOP || (mode == MODE_SURVIVAL && survivalPlayerCount == 2)) { settextcolor(RGB(100, 255, 100)); _stprintf_s(t, _T("P2:%d …˙√¸:%d"), player2.score, player2.lives); outtextxy(SCREEN_WIDTH - 180, 20, t); }
-                                                                             if (mode == MODE_SURVIVAL) {
-                                                                                 int sec = survivalTimer / 60;
-                                                                                 settextcolor(RGB(255, 255, 0)); _stprintf_s(t, _T(" £”‡ ±º‰: %d:%02d"), sec / 60, sec % 60); outtextxy(SCREEN_WIDTH / 2 - 90, 40, t);
-                                                                             }
-                                                                             else {
-                                                                                 settextcolor(RGB(255, 255, 255)); _stprintf_s(t, _T("◊‹∑÷:%d µ»º∂:%d"), totalScore, difficulty); outtextxy(SCREEN_WIDTH / 2 - 90, 20, t);
-                                                                                 settextcolor(RGB(255, 215, 0)); _stprintf_s(t, _T("Œ‰∆˜ Lv.%d"), player1.weaponLevel); outtextxy(20, 60, t);
-                                                                                 if (mode == MODE_COOP) { _stprintf_s(t, _T("Œ‰∆˜ Lv.%d"), player2.weaponLevel); outtextxy(SCREEN_WIDTH - 180, 60, t); }
-                                                                             }
-                                                                             settextcolor(RGB(150, 150, 150)); _stprintf_s(t, _T("∆§∑Ù:%s"), player1.skin.name); outtextxy(20, 85, t);
-                                                                             if (mode == MODE_COOP || (mode == MODE_SURVIVAL && survivalPlayerCount == 2)) { _stprintf_s(t, _T("∆§∑Ù:%s"), player2.skin.name); outtextxy(SCREEN_WIDTH - 180, 85, t); }
-                                                                         }
-                                                                         void drawPause() { setfillcolor(RGB(0, 0, 0)); solidrectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT); setbkmode(TRANSPARENT); settextstyle(50, 0, _T("Arial Black")); settextcolor(RGB(255, 255, 0)); outtextxy(SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 30, _T("‘›Õ£÷–")); settextstyle(20, 0, _T("Arial")); settextcolor(RGB(255, 255, 255)); outtextxy(SCREEN_WIDTH / 2 - 110, SCREEN_HEIGHT / 2 + 30, _T("∞¥ P ºÃ–¯")); }
-                                                                         void drawGameOver() {
-                                                                             setfillcolor(RGB(0, 0, 0)); solidrectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT); setbkmode(TRANSPARENT);
-                                                                             settextstyle(55, 0, _T("Arial Black")); settextcolor(RGB(255, 50, 50)); outtextxy(SCREEN_WIDTH / 2 - 150, 150, _T("”Œœ∑Ω· ¯"));
-                                                                             TCHAR t[80]; settextstyle(25, 0, _T("Arial")); settextcolor(RGB(255, 255, 255));
-                                                                             _stprintf_s(t, _T("P1:%d …˙√¸:%d"), player1.score, player1.lives); outtextxy(SCREEN_WIDTH / 2 - 150, 250, t);
-                                                                             if (mode == MODE_COOP) { _stprintf_s(t, _T("P2:%d …˙√¸:%d"), player2.score, player2.lives); outtextxy(SCREEN_WIDTH / 2 - 150, 280, t); }
-                                                                             _stprintf_s(t, _T("◊‹∑÷:%d"), totalScore); settextcolor(RGB(255, 215, 0)); outtextxy(SCREEN_WIDTH / 2 - 60, 330, t);
-                                                                             if (totalScore >= highScore && totalScore > 0) { settextcolor(RGB(255, 255, 0)); outtextxy(SCREEN_WIDTH / 2 - 100, 360, _T("–¬◊Ó∏ﬂ∑÷!")); }
-                                                                             settextstyle(20, 0, _T("Arial")); settextcolor(RGB(255, 255, 255));
-                                                                             outtextxy(SCREEN_WIDTH / 2 - 130, 430, _T("ENTER ‘Ÿ¿¥")); outtextxy(SCREEN_WIDTH / 2 - 120, 460, _T("ESC ≤Àµ•"));
-                                                                         }
-                                                                         void drawSurvivalResult(bool success) {
-                                                                             setfillcolor(RGB(0, 0, 0)); solidrectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT); setbkmode(TRANSPARENT);
-                                                                             settextstyle(55, 0, _T("Arial Black"));
-                                                                             if (success) { settextcolor(RGB(0, 255, 0)); outtextxy(SCREEN_WIDTH / 2 - 180, 200, _T("ÃÙ’Ω≥…π¶£°")); }
-                                                                             else { settextcolor(RGB(255, 50, 50)); outtextxy(SCREEN_WIDTH / 2 - 180, 200, _T("ÃÙ’Ω ß∞‹£°")); }
-                                                                             settextstyle(25, 0, _T("Arial")); settextcolor(RGB(255, 255, 255));
-                                                                             TCHAR t[80]; _stprintf_s(t, _T("¥ÊªÓ ±º‰: %d:%02d"), (SURVIVAL_DURATION - survivalTimer) / 3600, ((SURVIVAL_DURATION - survivalTimer) / 60) % 60);
-                                                                             outtextxy(SCREEN_WIDTH / 2 - 100, 300, t);
-                                                                             _stprintf_s(t, _T("ª˜…±µ√∑÷: %d"), totalScore); outtextxy(SCREEN_WIDTH / 2 - 80, 340, t);
-                                                                             settextstyle(20, 0, _T("Arial")); settextcolor(RGB(200, 200, 200));
-                                                                             outtextxy(SCREEN_WIDTH / 2 - 130, 430, _T("ENTER ∑µªÿƒ£ Ω—°‘Ò"));
-                                                                             outtextxy(SCREEN_WIDTH / 2 - 120, 460, _T("ESC ∑µªÿ÷˜≤Àµ•"));
-                                                                         }
-                                                                         void run() { init(); while (1) { update(); render(); Sleep(16); } }
+    void render() {
+        BeginBatchDraw(); if (bg) putimage(0, 0, bg);
+        if (state == STATE_MENU) { drawBreadcrumb(_T("‰∏ªËèúÂçï")); drawMenu(); }
+        else if (state == STATE_MODE_SELECT) { drawBreadcrumb(_T("‰∏ªËèúÂçï > Ê®°ÂºèÈÄâÊã©")); drawModeSelect(); }
+        else if (state == STATE_SURVIVAL_MODE_SELECT) { drawBreadcrumb(_T("‰∏ªËèúÂçï > Ê®°ÂºèÈÄâÊã© > ÁîüÂ≠ò‰∫∫Êï∞")); drawSurvivalModeSelect(); }
+        else if (state == STATE_DIFF_SELECT) {
+            TCHAR path[100]; if (mode == MODE_SURVIVAL) _stprintf_s(path, _T("‰∏ªËèúÂçï > Ê®°ÂºèÈÄâÊã© > ÁîüÂ≠ò‰∫∫Êï∞ > ÈöæÂ∫¶ÈÄâÊã©")); else _stprintf_s(path, _T("‰∏ªËèúÂçï > Ê®°ÂºèÈÄâÊã© > ÈöæÂ∫¶ÈÄâÊã©"));
+            drawBreadcrumb(path); drawDiffSelect();
+        }
+        else if (state == STATE_MAP_SELECT) {
+            TCHAR path[100]; if (mode == MODE_SURVIVAL) _stprintf_s(path, _T("‰∏ªËèúÂçï > Ê®°ÂºèÈÄâÊã© > ÁîüÂ≠ò‰∫∫Êï∞ > ÈöæÂ∫¶ÈÄâÊã© > Âú∞ÂõæÈÄâÊã©")); else _stprintf_s(path, _T("‰∏ªËèúÂçï > Ê®°ÂºèÈÄâÊã© > ÈöæÂ∫¶ÈÄâÊã© > Âú∞ÂõæÈÄâÊã©"));
+            drawBreadcrumb(path); drawMapSelect();
+        }
+        else if (state == STATE_SKIN_SELECT) {
+            TCHAR path[100]; if (mode == MODE_SURVIVAL) _stprintf_s(path, _T("‰∏ªËèúÂçï > Ê®°ÂºèÈÄâÊã© > ÁîüÂ≠ò‰∫∫Êï∞ > ÈöæÂ∫¶ÈÄâÊã© > Âú∞ÂõæÈÄâÊã© > ÁöÆËÇ§ÈÄâÊã©")); else _stprintf_s(path, _T("‰∏ªËèúÂçï > Ê®°ÂºèÈÄâÊã© > ÈöæÂ∫¶ÈÄâÊã© > Âú∞ÂõæÈÄâÊã© > ÁöÆËÇ§ÈÄâÊã©"));
+            drawBreadcrumb(path); drawSkinSelect();
+        }
+        else if (state == STATE_HELP) { drawBreadcrumb(_T("‰∏ªËèúÂçï > Â∏ÆÂä©")); drawHelp(); }
+        else if (state == STATE_SETTINGS) { drawBreadcrumb(_T("‰∏ªËèúÂçï > ËÆæÁΩÆ")); drawSettings(); }
+        else if (state == STATE_PLAYING || state == STATE_PAUSED) {
+            for (auto& pu : powerUps) pu.draw(); for (auto& b : bullets) b.draw(); for (auto& e : enemies) e.draw(); for (auto& l : lasers) l.draw();
+            player1.draw(); if (mode == MODE_COOP || (mode == MODE_SURVIVAL && survivalPlayerCount == 2)) player2.draw(); drawParticles(); drawUI();
+            if (state == STATE_PAUSED) { drawPause(); }
+        }
+        else if (state == STATE_GAMEOVER) drawGameOver();
+        else if (state == STATE_SURVIVAL_SUCCESS) drawSurvivalResult(true);
+        else if (state == STATE_SURVIVAL_FAIL) drawSurvivalResult(false);
+        EndBatchDraw();
+    }
+
+    void drawMenu() {
+        setbkmode(TRANSPARENT); settextstyle(55, 0, _T("Arial Black")); settextcolor(RGB(0, 200, 255));
+        outtextxy(SCREEN_WIDTH / 2 - 200, 100, _T("Â§™Á©∫Â∞ÑÂáªÊ∏∏Êàè"));
+        settextstyle(25, 0, _T("Arial")); settextcolor(RGB(255, 255, 255));
+        outtextxy(SCREEN_WIDTH / 2 - 160, 240, _T("Êåâ ENTER ÂºÄÂßã")); outtextxy(SCREEN_WIDTH / 2 - 140, 280, _T("Êåâ S ËÆæÁΩÆ"));
+        outtextxy(SCREEN_WIDTH / 2 - 120, 320, _T("Êåâ H Â∏ÆÂä©")); outtextxy(SCREEN_WIDTH / 2 - 110, 360, _T("Êåâ ESC ÈÄÄÂá∫"));
+        TCHAR t[50]; _stprintf_s(t, _T("ÊúÄÈ´òÂàÜ: %d"), highScore); settextcolor(RGB(255, 215, 0)); outtextxy(SCREEN_WIDTH / 2 - 70, 420, t);
+    }
+    void drawSettings() {
+        setbkmode(TRANSPARENT); setfillcolor(RGB(0, 0, 0)); solidrectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+        settextstyle(35, 0, _T("Arial Black")); settextcolor(RGB(0, 200, 255)); outtextxy(SCREEN_WIDTH / 2 - 60, 150, _T("ËÆæÁΩÆ"));
+        settextstyle(25, 0, _T("Arial"));
+        const TCHAR* opts[] = { _T("Á≤íÂ≠êÁâπÊïà"), _T("ËøîÂõû") };
+        for (int i = 0; i < 2; i++) {
+            TCHAR buf[40];
+            if (i == 0) _stprintf_s(buf, _T("%s: %s"), opts[i], showParticles ? _T("ÂºÄÂêØ") : _T("ÂÖ≥Èó≠"));
+            else _stprintf_s(buf, _T("%s"), opts[i]);
+            settextcolor(i == menuSel ? RGB(255, 255, 0) : RGB(255, 255, 255));
+            outtextxy(SCREEN_WIDTH / 2 - 100, 260 + i * 60, buf);
+        }
+        settextstyle(18, 0, _T("Arial")); settextcolor(RGB(200, 200, 200));
+        outtextxy(SCREEN_WIDTH / 2 - 150, 450, _T("W/S ÁßªÂä® Á©∫Ê†º/ÂõûËΩ¶ ÂàáÊç¢  ESC ËøîÂõû"));
+    }
+    void drawHelp() {
+        setfillcolor(RGB(0, 0, 0)); solidrectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT); setbkmode(TRANSPARENT);
+        settextstyle(35, 0, _T("Arial Black")); settextcolor(RGB(0, 200, 255)); outtextxy(SCREEN_WIDTH / 2 - 50, 30, _T("Â∏ÆÂä©"));
+        settextstyle(22, 0, _T("Arial")); settextcolor(RGB(255, 255, 255));
+        outtextxy(80, 100, _T("„ÄêÊìç‰ΩúËØ¥Êòé„Äë")); outtextxy(80, 140, _T("Áé©ÂÆ∂1: W/A/S/D ÁßªÂä®, Á©∫Ê†ºÂ∞ÑÂáª"));
+        outtextxy(80, 175, _T("Áé©ÂÆ∂2: ÊñπÂêëÈîÆ ÁßªÂä®, ÂõûËΩ¶Â∞ÑÂáª (Âèå‰∫∫)"));
+        outtextxy(80, 210, _T("P ÊöÇÂÅú, ESC ËøîÂõû, H Â∏ÆÂä©"));
+        outtextxy(80, 260, _T("„ÄêÈÅìÂÖ∑ËØ¥Êòé„Äë")); outtextxy(80, 300, _T("Á∫¢Ëâ≤ÂçÅÂ≠ó: ÁîüÂëΩ+1"));
+        outtextxy(80, 335, _T("ÈáëËâ≤ÊòüÊòü: Ê≠¶Âô®ÂçáÁ∫ß")); outtextxy(80, 370, _T("ËìùËâ≤Ëè±ÂΩ¢: 3ÁßíÊä§Áõæ"));
+        settextstyle(25, 0, _T("Arial")); settextcolor(RGB(255, 215, 0));
+        outtextxy(SCREEN_WIDTH / 2 - 120, 450, _T("Âà∂‰Ωú‰∫∫Ôºörongzhong6  fufu"));
+        settextstyle(16, 0, _T("Arial")); settextcolor(RGB(180, 180, 180));
+        TCHAR ver[30]; _stprintf_s(ver, _T("ÁâàÊú¨Ôºö%s"), GAME_VERSION); outtextxy(SCREEN_WIDTH - 120, SCREEN_HEIGHT - 30, ver);
+    }
+    void drawModeSelect() {
+        setbkmode(TRANSPARENT); settextstyle(35, 0, _T("Arial Black")); settextcolor(RGB(0, 200, 255));
+        outtextxy(SCREEN_WIDTH / 2 - 160, 150, _T("ÈÄâÊã©Ê®°Âºè")); settextstyle(25, 0, _T("Arial"));
+        const TCHAR* modes[] = { _T("Âçï‰∫∫ÈóØÂÖ≥"), _T("Âèå‰∫∫ÈóØÂÖ≥"), _T("ÁîüÂ≠òÊåëÊàò") };
+        for (int i = 0; i < 3; i++) { settextcolor(i == menuSel ? RGB(255, 255, 0) : RGB(255, 255, 255)); outtextxy(SCREEN_WIDTH / 2 - 100, 260 + i * 60, modes[i]); }
+        settextstyle(18, 0, _T("Arial")); settextcolor(RGB(200, 200, 200)); outtextxy(SCREEN_WIDTH / 2 - 130, 500, _T("W/S ÁßªÂä® Á©∫Ê†º/ÂõûËΩ¶ Á°ÆËÆ§  ESC ËøîÂõû"));
+    }
+    void drawSurvivalModeSelect() {
+        setbkmode(TRANSPARENT); settextstyle(35, 0, _T("Arial Black")); settextcolor(RGB(0, 200, 255));
+        outtextxy(SCREEN_WIDTH / 2 - 160, 150, _T("ÁîüÂ≠òÊåëÊàò - ÈÄâÊã©‰∫∫Êï∞")); settextstyle(25, 0, _T("Arial"));
+        const TCHAR* opts[] = { _T("Âçï‰∫∫"), _T("Âèå‰∫∫") };
+        for (int i = 0; i < 2; i++) { settextcolor(i == menuSel ? RGB(255, 255, 0) : RGB(255, 255, 255)); outtextxy(SCREEN_WIDTH / 2 - 100, 260 + i * 60, opts[i]); }
+        settextstyle(18, 0, _T("Arial")); settextcolor(RGB(200, 200, 200)); outtextxy(SCREEN_WIDTH / 2 - 130, 500, _T("W/S ÁßªÂä® Á©∫Ê†º/ÂõûËΩ¶ Á°ÆËÆ§  ESC ËøîÂõû"));
+    }
+    void drawDiffSelect() {
+        setbkmode(TRANSPARENT); settextstyle(35, 0, _T("Arial Black")); settextcolor(RGB(0, 200, 255));
+        outtextxy(SCREEN_WIDTH / 2 - 140, 150, _T("ÈÄâÊã©ÈöæÂ∫¶")); settextstyle(25, 0, _T("Arial"));
+        for (int i = 0; i < DIFF_COUNT; i++) { TCHAR buf[30]; _stprintf_s(buf, _T("%s"), g_diffNames[i]); settextcolor(i == diffSelectIndex ? RGB(255, 255, 0) : RGB(255, 255, 255)); outtextxy(SCREEN_WIDTH / 2 - 100, 260 + i * 60, buf); }
+        settextstyle(18, 0, _T("Arial")); settextcolor(RGB(200, 200, 200)); outtextxy(SCREEN_WIDTH / 2 - 130, 500, _T("W/S ÁßªÂä® Á©∫Ê†º/ÂõûËΩ¶ Á°ÆËÆ§  ESC ËøîÂõû"));
+    }
+    void drawMapSelect() {
+        setbkmode(TRANSPARENT); settextstyle(35, 0, _T("Arial Black")); settextcolor(RGB(0, 200, 255));
+        outtextxy(SCREEN_WIDTH / 2 - 140, 150, _T("ÈÄâÊã©Âú∞Âõæ")); settextstyle(25, 0, _T("Arial"));
+        for (int i = 0; i < MAP_COUNT; i++) { TCHAR buf[30]; _stprintf_s(buf, _T("%s"), g_mapNames[i]); settextcolor(i == mapSelectIndex ? RGB(255, 255, 0) : RGB(255, 255, 255)); outtextxy(SCREEN_WIDTH / 2 - 100, 260 + i * 60, buf); }
+        settextstyle(18, 0, _T("Arial")); settextcolor(RGB(200, 200, 200)); outtextxy(SCREEN_WIDTH / 2 - 130, 500, _T("W/S ÁßªÂä® Á©∫Ê†º/ÂõûËΩ¶ Á°ÆËÆ§  ESC ËøîÂõû"));
+    }
+    void drawSkinSelect() {
+        setbkmode(TRANSPARENT); settextstyle(30, 0, _T("Arial Black")); settextcolor(RGB(0, 200, 255));
+        TCHAR title[50]; _stprintf_s(title, _T("ÈÄâÊã©ÁöÆËÇ§ - Áé©ÂÆ∂ %d"), selectingPlayer); outtextxy(SCREEN_WIDTH / 2 - 140, 50, title);
+        Player preview(selectingPlayer); preview.setSkin(skinSelectIndex); preview.x = SCREEN_WIDTH / 2; preview.y = 200; preview.draw();
+        settextstyle(25, 0, _T("Arial")); settextcolor(RGB(255, 215, 0));
+        TCHAR name[30]; _stprintf_s(name, _T("<< %s >>"), g_skins[skinSelectIndex].name); outtextxy(SCREEN_WIDTH / 2 - 60, 280, name);
+        settextstyle(18, 0, _T("Arial")); settextcolor(RGB(200, 200, 200));
+        outtextxy(SCREEN_WIDTH / 2 - 170, 350, _T("A/D Êàñ ‚Üê ‚Üí ÂàáÊç¢  Á©∫Ê†º/ÂõûËΩ¶ Á°ÆËÆ§  ESC ËøîÂõû"));
+        settextstyle(16, 0, _T("Arial"));
+        int startX = SCREEN_WIDTH / 2 - 280;
+        for (int i = 0; i < SKIN_COUNT; i++) { int x = startX + i * 95; settextcolor(i == skinSelectIndex ? RGB(255, 255, 0) : RGB(150, 150, 150)); TCHAR mark[4]; _stprintf_s(mark, i == skinSelectIndex ? _T("[*]") : _T("[ ]")); outtextxy(x, 500, mark); settextcolor(RGB(255, 255, 255)); outtextxy(x + 20, 500, g_skins[i].name); }
+    }
+    void drawUI() {
+        setbkmode(TRANSPARENT); settextstyle(20, 0, _T("Arial")); TCHAR t[50];
+        settextcolor(RGB(0, 200, 255)); _stprintf_s(t, _T("P1:%d ÁîüÂëΩ:%d"), player1.score, player1.lives); outtextxy(20, 20, t);
+        if (mode == MODE_COOP || (mode == MODE_SURVIVAL && survivalPlayerCount == 2)) { settextcolor(RGB(100, 255, 100)); _stprintf_s(t, _T("P2:%d ÁîüÂëΩ:%d"), player2.score, player2.lives); outtextxy(SCREEN_WIDTH - 180, 20, t); }
+        if (mode == MODE_SURVIVAL) {
+            int sec = survivalTimer / 60;
+            settextcolor(RGB(255, 255, 0)); _stprintf_s(t, _T("Ââ©‰ΩôÊó∂Èó¥: %d:%02d"), sec / 60, sec % 60); outtextxy(SCREEN_WIDTH / 2 - 90, 40, t);
+        }
+        else {
+            settextcolor(RGB(255, 255, 255)); _stprintf_s(t, _T("ÊÄªÂàÜ:%d Á≠âÁ∫ß:%d"), totalScore, difficulty); outtextxy(SCREEN_WIDTH / 2 - 90, 20, t);
+        }
+        // ‚òÖ ‰ΩøÁî®Êñ∞ÁöÑÊ≠¶Âô®Á≠âÁ∫ßÊòæÁ§∫
+        settextcolor(RGB(255, 215, 0));
+        _stprintf_s(t, _T("Ê≠¶Âô®: %s"), getWeaponLevelName(player1));
+        outtextxy(20, 60, t);
+        if (mode == MODE_COOP || (mode == MODE_SURVIVAL && survivalPlayerCount == 2)) {
+            _stprintf_s(t, _T("Ê≠¶Âô®: %s"), getWeaponLevelName(player2));
+            outtextxy(SCREEN_WIDTH - 180, 60, t);
+        }
+        settextcolor(RGB(150, 150, 150)); _stprintf_s(t, _T("ÁöÆËÇ§:%s"), player1.skin.name); outtextxy(20, 85, t);
+        if (mode == MODE_COOP || (mode == MODE_SURVIVAL && survivalPlayerCount == 2)) { _stprintf_s(t, _T("ÁöÆËÇ§:%s"), player2.skin.name); outtextxy(SCREEN_WIDTH - 180, 85, t); }
+    }
+    void drawPause() { setfillcolor(RGB(0, 0, 0)); solidrectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT); setbkmode(TRANSPARENT); settextstyle(50, 0, _T("Arial Black")); settextcolor(RGB(255, 255, 0)); outtextxy(SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 - 30, _T("ÊöÇÂÅú‰∏≠")); settextstyle(20, 0, _T("Arial")); settextcolor(RGB(255, 255, 255)); outtextxy(SCREEN_WIDTH / 2 - 110, SCREEN_HEIGHT / 2 + 30, _T("Êåâ P ÁªßÁª≠")); }
+    void drawGameOver() {
+        setfillcolor(RGB(0, 0, 0)); solidrectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT); setbkmode(TRANSPARENT);
+        settextstyle(55, 0, _T("Arial Black")); settextcolor(RGB(255, 50, 50)); outtextxy(SCREEN_WIDTH / 2 - 150, 150, _T("Ê∏∏ÊàèÁªìÊùü"));
+        TCHAR t[80]; settextstyle(25, 0, _T("Arial")); settextcolor(RGB(255, 255, 255));
+        _stprintf_s(t, _T("P1:%d ÁîüÂëΩ:%d"), player1.score, player1.lives); outtextxy(SCREEN_WIDTH / 2 - 150, 250, t);
+        if (mode == MODE_COOP) { _stprintf_s(t, _T("P2:%d ÁîüÂëΩ:%d"), player2.score, player2.lives); outtextxy(SCREEN_WIDTH / 2 - 150, 280, t); }
+        _stprintf_s(t, _T("ÊÄªÂàÜ:%d"), totalScore); settextcolor(RGB(255, 215, 0)); outtextxy(SCREEN_WIDTH / 2 - 60, 330, t);
+        if (totalScore >= highScore && totalScore > 0) { settextcolor(RGB(255, 255, 0)); outtextxy(SCREEN_WIDTH / 2 - 100, 360, _T("Êñ∞ÊúÄÈ´òÂàÜ!")); }
+        settextstyle(20, 0, _T("Arial")); settextcolor(RGB(255, 255, 255));
+        outtextxy(SCREEN_WIDTH / 2 - 130, 430, _T("ENTER ÂÜçÊù•")); outtextxy(SCREEN_WIDTH / 2 - 120, 460, _T("ESC ËèúÂçï"));
+    }
+    void drawSurvivalResult(bool success) {
+        setfillcolor(RGB(0, 0, 0)); solidrectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT); setbkmode(TRANSPARENT);
+        settextstyle(55, 0, _T("Arial Black"));
+        if (success) { settextcolor(RGB(0, 255, 0)); outtextxy(SCREEN_WIDTH / 2 - 180, 200, _T("ÊåëÊàòÊàêÂäüÔºÅ")); }
+        else { settextcolor(RGB(255, 50, 50)); outtextxy(SCREEN_WIDTH / 2 - 180, 200, _T("ÊåëÊàòÂ§±Ë¥•ÔºÅ")); }
+        settextstyle(25, 0, _T("Arial")); settextcolor(RGB(255, 255, 255));
+        TCHAR t[80]; _stprintf_s(t, _T("Â≠òÊ¥ªÊó∂Èó¥: %d:%02d"), (SURVIVAL_DURATION - survivalTimer) / 3600, ((SURVIVAL_DURATION - survivalTimer) / 60) % 60);
+        outtextxy(SCREEN_WIDTH / 2 - 100, 300, t);
+        _stprintf_s(t, _T("ÂáªÊùÄÂæóÂàÜ: %d"), totalScore); outtextxy(SCREEN_WIDTH / 2 - 80, 340, t);
+        settextstyle(20, 0, _T("Arial")); settextcolor(RGB(200, 200, 200));
+        outtextxy(SCREEN_WIDTH / 2 - 130, 430, _T("ENTER ËøîÂõûÊ®°ÂºèÈÄâÊã©"));
+        outtextxy(SCREEN_WIDTH / 2 - 120, 460, _T("ESC ËøîÂõû‰∏ªËèúÂçï"));
+    }
+    void run() { init(); while (1) { update(); render(); Sleep(16); } }
 };
 
 int main() {
     initgraph(SCREEN_WIDTH, SCREEN_HEIGHT);
-    SetWindowText(GetHWnd(), _T("Ã´ø’…‰ª˜”Œœ∑ V1.5"));
+    SetWindowText(GetHWnd(), _T("Â§™Á©∫Â∞ÑÂáªÊ∏∏Êàè V1.6 - ÁªàÊûÅÊ≠¶Âô®"));
     SetWindowLongPtr(GetHWnd(), GWLP_WNDPROC, (LONG_PTR)GameWndProc);
     SpaceGame game; game.run();
     closegraph(); return 0;
